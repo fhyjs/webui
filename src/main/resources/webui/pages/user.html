@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User</title>
+    <script src="../assets/jquery-3.7.1.min.js"></script>
+    <script src="../assets/sweetalert2.js"></script>
+    <script src="../assets/app.js"></script>
+    <script src="../assets/page.js"></script>
+
+</head>
+<body>
+    <h1>用户信息</h1>
+    <hr/>
+    当前用户: <span id="username">Loading</span><br>
+    用户权限: <span id="permission">Loading</span>
+    <hr/>
+    <h2>登录</h2>
+    <div class="input-group">
+        <label for="username">用户名</label>
+        <input type="text" id="username-field" name="username" required>
+    </div>
+    <div class="input-group">
+        <label for="password">密码</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    <button class="submit-btn">登录</button>
+    <button class="logout-btn">退出登录</button>
+    <script>
+        $(document).ready(function(){
+            console.log("start");
+            if (typeof app.userData.data.username === "undefined"){
+                $("#username").html("未登录");
+            }else{
+                $("#username").html(app.userData.data.username);
+            }
+            $("#permission").html(app.userData.data.permission);
+
+            $(".submit-btn").click(function(){
+                // 创建一个 JavaScript 对象
+                var data = {
+                    action:"login",
+                    username:$("#username-field").val(),
+                    password:$("#password").val()
+                };
+
+                // 将对象转换为 JSON 字符串
+                var jsonData = JSON.stringify(data, null, 2); // 格式化 JSON 字符串
+                var data = $.parseJSON(synchronousPostRequest("../../../../data/user/login.json",jsonData));
+                Swal.fire({
+                    title: data.status,
+                    text: data.msg,
+                    icon: data.status
+                }).then((result) => {
+                    if(data.status==="success")
+                    window.parent.location.reload();
+                });
+            });
+            $(".logout-btn").click(function(){
+                var data = $.parseJSON(synchronousPostRequest("../../../../data/user/login.json","{\"action\":\"logout\"}"));
+                Swal.fire({
+                    title: data.status,
+                    text: data.msg,
+                    icon: data.status
+                }).then((result) => {
+                    if(data.status==="success")
+                        window.parent.location.reload();
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>401</title>
+    <script src="../assets/jquery-3.7.1.min.js"></script>
+    <script src="../assets/app.js"></script>
+</head>
+<body>
+  <h1>权限不足</h1>
+  <hr/>
+  本页面需要 <span id="lv">Loading</span> 权限等级
+    <script>
+        $(document).ready(function(){
+            $("#lv").html(synchronousPostRequest("../../../../data/page_permission.txt",window.location.pathname));
+        });
+    </script>
+</body>
+</html>

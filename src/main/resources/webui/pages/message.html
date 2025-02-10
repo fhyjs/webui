@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User</title>
+    <script src="../assets/jquery-3.7.1.min.js"></script>
+    <script src="../assets/app.js"></script>
+    <script src="../assets/page.js"></script>
+    <script src="../assets/dataTables.min.js"></script>
+    <link rel="stylesheet" href="../assets/dataTables.dataTables.min.css">
+</head>
+<body>
+    <h1>控制台消息</h1>
+    <hr/>
+    <table id="sortableTable" class="display">
+        <thead>
+        <tr>
+            <th>序号</th>
+            <th>内容</th>
+            <th>级别</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr><td>0</td><td>这是消息列表</td><td>通知</td></tr>
+        </tbody>
+    </table>
+    <script>
+        $(document).ready(function(){
+            var table = $('#sortableTable').DataTable({
+                "order": [[0, 'desc']]  // 默认按年龄列（第2列，索引为1）降序排序
+            });
+            var id=0;
+            app.messages.forEach(function(msg){
+                id++;
+                // 添加新行数据
+                table.row.add([
+                    id,
+                    msg.content,
+                    msg.level
+                ]).draw();  // 重新绘制表格，显示新增的行
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>WebUI</title>
+    <!--[if lte IE 8]>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js?v=1716974774741"></script>
+    <![endif]-->
+    <link rel="stylesheet" href="assets/biliplus.min.css" type="text/css" media="all" />
+    <script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/jquery/3.6.0/jquery.min.js" type="application/javascript"></script>
+    <script src="assets/app.js" type="text/javascript" charset="utf-8"></script>
+    <script src="assets/sweetalert2.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/js-cookie/3.0.1/js.cookie.min.js" type="application/javascript"></script>
+    <style type="text/css" media="all">
+        body,html{
+            height: 99%;
+        }
+    </style>
+</head>
+<body>
+<div id="userbar" class="userbar">
+    <p class="userbarcontent" style="vertical-align:center">
+        <span id="greeting">您好</span>
+        <span style="cursor:pointer" onclick="usersidebar(1)">
+					<b>点击打开侧边栏</b>
+				</span>
+    </p>
+    <div id="usersidebar" class="usersidebar" style="right: 0px;">
+        <div class="usersidebar_item">
+            <div onclick="usersidebar(0)" class="usersidebar_item_inner" style="margin:0">关闭&gt;&gt;</div>
+        </div>
+        <div id="usersidebar_content">加载中</div>
+    </div>
+</div>
+<div id="sidebar" class="sidebar">
+    <div class="sidebar-title"></div>
+    <a onclick='setPage("pages/index.html");' one-link-mark="yes">
+        <div class="sidebar-list">首页</div>
+    </a>
+    <div id="nav-btn-ps" class="sidebar-about">
+        <b></b>
+    </div>
+    <div id="time" class="sidebar-about" style="box-shadow:none;margin:0px;padding:0px;white-space:pre"></div>
+    <div class="sidebar-about" style="box-shadow:none;margin:0px;padding:0px">
+        <a onclick="document.getElementById('content-iframe').contentWindow.location.reload();" one-link-mark="yes">
+            <span title="哇袄">刷新内容</span>
+        </a>
+    </div>
+</div>
+<div id="content" class="content">
+    <iframe width="99%" id="content-iframe" src="about:blank"></iframe>
+</div>
+<div id="footer" style="color:rgb(0,0,0);" class="footer">
+    位置:<span id="path-loc"></span>
+</div>
+<script type="text/javascript" charset="utf-8">
+    $(document).ready(function (){
+        usersidebar(0);
+        $("#greeting").html(getGreeting());
+        window.app=new appClass();
+        $('#content-iframe').on('load', function() {
+
+        });
+    });
+</script>
+</body>
+</html>
