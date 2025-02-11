@@ -73,6 +73,9 @@ public class LoginHandler extends AbstractPathHandler {
                             if (query.isEmpty()){
                                 throw new RuntimeException("用户名不存在");
                             }
+                            user.data.addProperty("username",username);
+                            user.data.addProperty("nickname",query.get(0).getAsJsonObject().get("nickname").getAsString());
+                            user.data.addProperty("permission",query.get(0).getAsJsonObject().get("permission").getAsInt());
                             stringMonoSink.success("{\"status\":\"success\",\"msg\":\"登录成功\"}");
                         }catch (Throwable throwable){
                             stringMonoSink.success("{\"status\":\"error\",\"msg\":\""+throwable.toString().replace("\"","\\\"")+"\"}");

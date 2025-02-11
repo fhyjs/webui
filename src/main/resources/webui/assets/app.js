@@ -200,6 +200,11 @@ class appClass{
     messages=[];
     getUserData(){
         this.userData=$.parseJSON(synchronousPostRequest("../../../data/user_data.json",""));
+        if (typeof this.userData.data.username === "undefined"){
+            $("#username").html("未登录");
+        }else{
+            $("#username").html(this.userData.data.username);
+        }
     }
     constructor(){
         var tip = Swal.fire({
