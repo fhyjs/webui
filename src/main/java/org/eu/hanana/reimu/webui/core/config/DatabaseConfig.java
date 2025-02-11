@@ -1,6 +1,8 @@
 package org.eu.hanana.reimu.webui.core.config;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import org.eu.hanana.reimu.webui.core.Util;
@@ -42,8 +44,11 @@ public class DatabaseConfig {
             file.delete();
             Files.createFile(pth);
         }
-        var gson = new Gson();
-        Files.writeString(pth,gson.toJson(this));
+        var jo = new JsonObject();
+        jo.addProperty("sqlManagerClass",sqlManagerClass);
+        jo.addProperty("constructorSignature",constructorSignature);
+        jo.add("constructorArgs",new Gson().toJsonTree(constructorArgs));
+        Files.writeString(pth,jo.toString());
     }
     public static DatabaseConfig loadFromFile(File file) throws IOException {
         if (file==null) file=new File("sql_config.json");

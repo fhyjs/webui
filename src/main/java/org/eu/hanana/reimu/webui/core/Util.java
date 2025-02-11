@@ -1,5 +1,6 @@
 package org.eu.hanana.reimu.webui.core;
 
+import com.google.gson.JsonObject;
 import io.netty.handler.codec.http.cookie.Cookie;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -8,6 +9,9 @@ import reactor.core.scheduler.Schedulers;
 import reactor.netty.http.server.HttpServerRequest;
 import reactor.netty.http.server.HttpServerResponse;
 
+import java.awt.*;
+import java.awt.geom.AffineTransform;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -15,6 +19,7 @@ import java.lang.reflect.Parameter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +27,63 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Log4j2
 public class Util {
+    private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    public static String generateRandomString(int length) {
+        StringBuilder sb = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            sb.append(CHARACTERS.charAt(RANDOM.nextInt(CHARACTERS.length())));
+        }
+        return sb.toString();
+    }
+    private static void applyTextWarp(Graphics2D g, String text, int width, int height) {
+        AffineTransform origTransform = g.getTransform();
+
+        int x = 20;
+        int y = height / 2 + 10;
+
+        for (char c : text.toCharArray()) {
+            // 生成波浪效果
+            double shearX = (RANDOM.nextDouble() - 0.5) * 1.1; // 水平扭曲
+            double shearY = (RANDOM.nextDouble() - 0.5) * 1.1; // 垂直扭曲
+
+            AffineTransform transform = new AffineTransform();
+            transform.translate(x, y);
+            transform.shear(shearX, shearY);
+
+            g.setTransform(transform);
+            g.drawString(String.valueOf(c), 0, 0);
+            x += 25 + RANDOM.nextInt(5);
+        }
+
+        g.setTransform(origTransform);
+    }
+    public static BufferedImage generateCaptchaImage(String captchaText) throws IOException {
+        int width = 150, height = 50;
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = image.createGraphics();
+
+        // 背景
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, width, height);
+
+        // 随机字体和颜色
+        g.setFont(new Font("Arial", Font.BOLD, 32));
+        g.setColor(new Color(RANDOM.nextInt(200), RANDOM.nextInt(200), RANDOM.nextInt(200)));
+
+        // 生成扭曲文本
+        applyTextWarp(g, captchaText, width, height);
+
+        // 添加干扰线
+        for (int i = 0; i < 5; i++) {
+            g.setColor(new Color(RANDOM.nextInt(255), RANDOM.nextInt(255), RANDOM.nextInt(255)));
+            g.drawLine(RANDOM.nextInt(width), RANDOM.nextInt(height), RANDOM.nextInt(width), RANDOM.nextInt(height));
+        }
+
+        g.dispose();
+        return image;
+    }
     public static Cookie getCookieValue(HttpServerRequest request, String cookieName) {
         // 获取所有的 cookies
         return Optional.of(request.cookies())
@@ -188,5 +250,34 @@ public class Util {
                 stringMonoSink.success(new String(bytes,StandardCharsets.UTF_8));
             }).doOnError(stringMonoSink::error).subscribe();
         });
+    }
+
+    public static String parseColumn(JsonObject column, String dbName) {
+        String name = column.get("name").getAsString();
+        String type = column.get("type").getAsString();
+        boolean primaryKey = column.has("primaryKey") && column.get("primaryKey").getAsBoolean();
+        boolean autoIncrement = column.has("autoIncrement") && column.get("autoIncrement").getAsBoolean();
+        boolean unique = column.has("unique") && column.get("unique").getAsBoolean();
+        boolean notNull = column.has("notNull") && column.get("notNull").getAsBoolean();
+
+        // 兼容不同数据库的 AUTO_INCREMENT
+        if (autoIncrement) {
+            if (dbName.contains("mysql") || dbName.contains("postgresql")) {
+                type += " AUTO_INCREMENT";
+            } else if (dbName.contains("sqlite")) {
+                type = "INTEGER PRIMARY KEY AUTOINCREMENT"; // SQLite 主键必须是 INTEGER
+            } else if (dbName.contains("sql server")) {
+                type = "INT IDENTITY(1,1) PRIMARY KEY";
+            } else if (dbName.contains("oracle")) {
+                type = "NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY";
+            }
+        }
+
+        StringBuilder columnDef = new StringBuilder(name + " " + type);
+        if (notNull) columnDef.append(" NOT NULL");
+        if (unique) columnDef.append(" UNIQUE");
+        if (primaryKey && !autoIncrement) columnDef.append(" PRIMARY KEY");
+
+        return columnDef.toString();
     }
 }

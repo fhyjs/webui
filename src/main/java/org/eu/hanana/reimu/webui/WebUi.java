@@ -10,11 +10,13 @@ import org.eu.hanana.reimu.webui.authentication.IAuthenticator;
 import org.eu.hanana.reimu.webui.authentication.account.AccountManager;
 import org.eu.hanana.reimu.webui.core.IEventCallback;
 import org.eu.hanana.reimu.webui.core.INamed;
+import org.eu.hanana.reimu.webui.core.Util;
 import org.eu.hanana.reimu.webui.core.WebuiEventCallback;
 import org.eu.hanana.reimu.webui.core.config.DatabaseConfig;
 import org.eu.hanana.reimu.webui.handler.*;
 import org.eu.hanana.reimu.webui.handler.permission.GetPermissionLvHandler;
 import org.eu.hanana.reimu.webui.handler.settings.DatabaseHandler;
+import org.eu.hanana.reimu.webui.handler.settings.UserHandler;
 import org.eu.hanana.reimu.webui.handler.user.LoginHandler;
 import org.eu.hanana.reimu.webui.session.LocalSessionManager;
 import org.eu.hanana.reimu.webui.session.MemorySessionManager;
@@ -54,7 +56,6 @@ public class WebUi implements Closeable {
     public final String host;
     public final int port;
     private boolean firstOpen = true;
-    @Setter
     @Getter
     protected DatabaseConfig databaseConfig=null;
     @Getter
@@ -118,12 +119,17 @@ public class WebUi implements Closeable {
             handlers.add(new GetPermissionLvHandler());
             handlers.add(new WsHandler());
             handlers.add(new DatabaseHandler());
+            handlers.add(new UserHandler());
             addPermissionRule("^/data/settings/.*",2);
             addPermissionRule("^/static/cp/webui/pages/settings.html",2);
             authenticator.setChecker(this::hasPermission);
-            if (Files.exists(Path.of("sql_config.json"))) databaseConfig = DatabaseConfig.loadFromFile(null);
             setAccountManager(new AccountManager());
             addEventCallback(new WebuiEventCallback(this));
+            if (Files.exists(Path.of("sql_config.json"))) {
+                setDatabaseConfig(DatabaseConfig.loadFromFile(null));
+                log.info("database loaded!");
+            }
+            Files.writeString(Path.of("recovery_password.txt"), Util.generateRandomString(20));
         }
         firstOpen=false;
         log.info("Opening webui at {}:{},first:{},sync:{}",host,port,first,sync);
@@ -146,7 +152,8 @@ public class WebUi implements Closeable {
         }
         if (throwable.get()!=null) throw new RuntimeException(throwable.get());
     }
-    public void dispatchEvent(String name,Object... args){
+    @SneakyThrows
+    public void dispatchEvent(String name, Object... args){
         var events = new ArrayList<>(eventCallbacks);
         for (IEventCallback event : events) {
             Method[] methods = event.getClass().getMethods();
@@ -155,11 +162,20 @@ public class WebUi implements Closeable {
                 if (method.getParameterCount()!=args.length) continue;
                 try {
                     method.invoke(event,args);
-                } catch (InvocationTargetException | IllegalAccessException ignored) {
+                } catch (InvocationTargetException | IllegalAccessException exception) {
+                    if (exception instanceof InvocationTargetException){
+                        throw (InvocationTargetException) exception;
+                    }
                 }
             }
         }
     }
+
+    public void setDatabaseConfig(DatabaseConfig databaseConfig) {
+        this.databaseConfig = databaseConfig;
+        dispatchEvent("onSetDatabaseConfig",databaseConfig);
+    }
+
     public void addEventCallback(IEventCallback eventCallback){
         eventCallbacks.add(eventCallback);
     }

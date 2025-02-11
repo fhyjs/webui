@@ -9,6 +9,7 @@ import reactor.core.publisher.Mono;
 import reactor.netty.http.server.HttpServerRequest;
 import reactor.netty.http.server.HttpServerResponse;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,10 +46,23 @@ public class DatabaseHandler extends AbstractPathHandler {
                         throwable.printStackTrace();
                     }
                     if (!error){
-                        webUi.setDatabaseConfig(dbc);
-                        result.add("status",new JsonPrimitive("success"));
-                        result.add("msg",new JsonPrimitive("success"));
-                        dbc.saveToFile(null);
+                        if (webUi.getDatabaseConfig()!=null){
+                            try {
+                                webUi.getDatabaseConfig().getDatabase().close();
+                            } catch (IOException e) {
+                                stringMonoSink.error(e);
+                            }
+                        }
+                        try{
+                            webUi.setDatabaseConfig(dbc);
+                            dbc.saveToFile(null);
+                            result.add("status",new JsonPrimitive("success"));
+                            result.add("msg",new JsonPrimitive("success"));
+                        }catch (Throwable e) {
+                            e.printStackTrace();
+                            result.add("status",new JsonPrimitive("error"));
+                            result.add("msg",new JsonPrimitive(e.getCause().toString()));
+                        }
                     }
 
                 }else if(action.equals("get")) {

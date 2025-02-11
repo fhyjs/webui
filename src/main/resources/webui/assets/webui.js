@@ -34,5 +34,6 @@ $('#content-iframe').on('load', function() {
     var ifdoc = $(iframe.contentWindow.document);
     if (iframe.contentWindow.location.href.includes("pages/settings.html")){
         ifdoc.find("#links").append("<li><a href='settings/db.html'>数据库设置</a></li>");
+        ifdoc.find("#links").append("<li><a href='settings/user.html'>用户管理</a></li>");
     }
 });
