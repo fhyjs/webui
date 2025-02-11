@@ -19,6 +19,11 @@ public class DatabaseConfig {
     public String constructorSignature = Util.getDescriptor(Sqlite.class.getConstructors()[0]);
     public List<String> constructorArgs = Collections.singletonList("jdbc:sqlite:./webui.db");
     protected IDatabase database=null;
+    public DatabaseConfig(String sqlManagerClass,String constructorSignature,List<String> constructorArgs){
+        this.sqlManagerClass=sqlManagerClass;
+        this.constructorArgs=constructorArgs;
+        this.constructorSignature=constructorSignature;
+    }
     @SneakyThrows
     public IDatabase getDatabase(){
         if (database==null){

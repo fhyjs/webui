@@ -14,6 +14,7 @@ import org.eu.hanana.reimu.webui.core.WebuiEventCallback;
 import org.eu.hanana.reimu.webui.core.config.DatabaseConfig;
 import org.eu.hanana.reimu.webui.handler.*;
 import org.eu.hanana.reimu.webui.handler.permission.GetPermissionLvHandler;
+import org.eu.hanana.reimu.webui.handler.settings.DatabaseHandler;
 import org.eu.hanana.reimu.webui.handler.user.LoginHandler;
 import org.eu.hanana.reimu.webui.session.LocalSessionManager;
 import org.eu.hanana.reimu.webui.session.MemorySessionManager;
@@ -116,6 +117,7 @@ public class WebUi implements Closeable {
             handlers.add(new LoginHandler());
             handlers.add(new GetPermissionLvHandler());
             handlers.add(new WsHandler());
+            handlers.add(new DatabaseHandler());
             addPermissionRule("^/data/settings/.*",2);
             addPermissionRule("^/static/cp/webui/pages/settings.html",2);
             authenticator.setChecker(this::hasPermission);

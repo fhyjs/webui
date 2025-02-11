@@ -31,20 +31,28 @@ public class LoginHandler extends AbstractPathHandler {
                 Gson gson = new Gson();
                 JsonObject jsonObject = JsonParser.parseString(s).getAsJsonObject();
                 String action = jsonObject.get("action").getAsString();
+                user.markDirty();
                 if (action.equals("logout")){
                     Set<String> strings = new HashSet<>(user.data.keySet());
                     for (String string : strings) {
                         user.data.remove(string);
                     }
                     stringMonoSink.success("{\"status\":\"success\",\"msg\":\"已经退出\"}");
-                    try {
-                        new Mysql("jdbc:mysql://192.168.1.103/douphp","root1","a").close();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
                 }else if (action.equals("login")){
-                    user.data.add("username",new JsonPrimitive(jsonObject.get("username").getAsString()));
-                    stringMonoSink.success("{\"status\":\"success\",\"msg\":\"登录成功\"}");
+                    var username = jsonObject.get("username").getAsString();
+                    var password = jsonObject.get("password").getAsString();
+                    if (username.isEmpty()){
+                        stringMonoSink.success("{\"status\":\"error\",\"msg\":\"用户名不能为空\"}");
+                        return;
+                    }
+                    if (webUi.getDatabaseConfig()==null) {
+                        user.data.add("username", new JsonPrimitive(username));
+                        user.data.addProperty("permission",Integer.MAX_VALUE);
+                        stringMonoSink.success("{\"status\":\"success\",\"msg\":\"未设置数据库!!!登录成功\"}");
+                        return;
+                    }else {
+
+                    }
                 }else{
                     stringMonoSink.success("{\"status\":\"error\",\"msg\":\"未指定操作\"}");
                 }

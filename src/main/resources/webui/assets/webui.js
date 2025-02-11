@@ -1,4 +1,5 @@
 addNavButton("pages/message.html","消息");
+addNavButton("pages/settings.html","设置");
 addNavButton("pages/user.html","用户");
 var msgLink=null;
 $("#sidebar a").each(function(index, element) {
@@ -26,5 +27,12 @@ document.addEventListener("app_ws",function(e){
         if (message.op=="sendMessage"){
             app.sendMessage(data.level,data.msg);
         }
+    }
+});
+$('#content-iframe').on('load', function() {
+    var iframe = $('#content-iframe')[0];
+    var ifdoc = $(iframe.contentWindow.document);
+    if (iframe.contentWindow.location.href.includes("pages/settings.html")){
+        ifdoc.find("#links").append("<li><a href='settings/db.html'>数据库设置</a></li>");
     }
 });

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="../../assets/jquery-3.7.1.min.js"></script>
+    <script src="../../assets/app.js"></script>
+    <script src="../../assets/sweetalert2.js"></script>
+</head>
+<body>
+    <h1>数据库设置</h1>
+    <hr>
+    <button onclick="$('#desc').html('url(jdbc:mysql://[host]/[database]),用户名,密码');$('#db-class').val('org.eu.hanana.reimu.webui.core.database.Mysql');$('#db-constructor').val('<init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V');setArgNumber(3)">预设:MySql</button>
+    <button onclick="$('#desc').html('url(jdbc:sqlite:[文件名])');$('#db-class').val('org.eu.hanana.reimu.webui.core.database.Sqlite');$('#db-constructor').val('<init>(Ljava/lang/String;)V');setArgNumber(1)">预设:SqlLite</button>
+    <br>
+    <label>
+        数据库适配类:
+        <input id="db-class" type="text" placeholder="请输入文本"><br>
+        构造签名:
+        <input id="db-constructor" type="text" placeholder="请输入文本">
+    </label><br>
+    预设参数提示:<span id="desc"></span><br>
+    参数列表:<br>
+    <div id="argv"></div><br>
+    <button onclick="setArgNumber(argNum+1)">+</button><button onclick="setArgNumber(argNum-1)">-</button><hr/>
+    <button onclick="save()">验证并保存</button>
+    <script>
+        argNum=0;
+        function setArgNumber(n){
+            argNum=n;
+            $("#argv").html("");
+            for (var i=0;i<n;i++){
+                $("#argv").append(`<input id="argv${i}" type="text" placeholder="请输入文本">,<br/>`);
+            }
+        }
+        function save(){
+            var args = [];
+            for (var i=0;i<argNum;i++){
+                args.push($(`#argv #argv${i}`).val());
+            }
+            // 创建一个 JavaScript 对象
+            var data = {
+                action:"save",
+                sqlManagerClass:$("#db-class").val(),
+                constructorSignature:$("#db-constructor").val(),
+                args:args
+            };
+
+            // 将对象转换为 JSON 字符串
+            var jsonData = JSON.stringify(data, null, 2); // 格式化 JSON 字符串
+            var data = $.parseJSON(synchronousPostRequest("../../../../../data/settings/database.json",jsonData));
+            Swal.fire({
+                title: data.status,
+                text: data.msg,
+                icon: data.status
+            }).then((result) => {
+
+            });
+        }
+        $(document).ready(function(){
+            // 创建一个 JavaScript 对象
+            var data = {
+                action:"get"
+            };
+
+            // 将对象转换为 JSON 字符串
+            var jsonData = JSON.stringify(data, null, 2); // 格式化 JSON 字符串
+            data = $.parseJSON(synchronousPostRequest("../../../../../data/settings/database.json",jsonData));
+            if(data.status==="success"){
+                $('#db-class').val(data.sqlManagerClass);
+                $('#db-constructor').val(data.constructorSignature);
+                $('#db-constructor').val(data.constructorSignature);
+                var args = data.constructorArgs;
+                setArgNumber(args.length);
+                for (var i=0;i<argNum;i++){
+                    $(`#argv #argv${i}`).val(args[i]);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
