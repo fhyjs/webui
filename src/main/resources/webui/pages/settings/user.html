@@ -21,19 +21,20 @@
             <th>密码</th>
             <th>昵称</th>
             <th>权限等级</th>
+            <th>操作</th>
         </tr>
         </thead>
         <tbody>
         </tbody>
     </table>
-    <h2>添加用户</h2>
+    <h2>添加/编辑用户</h2>
     <hr>
     <label>
         用户名*:<input type="text" id="add-un" required><br>
         密码*:<input type="text" id="add-pw" required><br>
         昵称:<input type="text" id="add-nn"><br>
         权限等级*:<input type="number" id="add-pl" value="0" required><br>
-        <button id="add" type="submit">添加</button>
+        <button id="add" type="submit">操作</button>
     </label>
     <script>
         $(document).ready(function(){
@@ -73,6 +74,41 @@
                     window.location.reload();
                 }
             });
+            $(".edit-btn").click(function (e){
+                var btn = $(e.target);
+                var id = btn.attr("data-id");
+                var row = table.row(id).data();
+                console.log(row);
+                $("#add-un").val(row[1]);
+                $("#add-pw").val(row[2]);
+                $("#add-nn").val(row[3]);
+                $("#add-pl").val(row[4]);
+            });
+            $(".delete-btn").click(function (e){
+                var btn = $(e.target);
+                var id = btn.attr("data-id");
+                var row = table.row(id).data();
+                console.log(row);
+                // 创建一个 JavaScript 对象
+                var data = {
+                    action:"delete",
+                    id:row[0],
+                };
+
+                // 将对象转换为 JSON 字符串
+                var jsonData = JSON.stringify(data, null, 2); // 格式化 JSON 字符串
+                var data = $.parseJSON(synchronousPostRequest("../../../../../data/settings/user.json",jsonData));
+                if (data.status==="error"){
+                    Swal.fire({
+                        title: data.status,
+                        text: data.msg,
+                        icon: data.status
+                    });
+                    return;
+                }else{
+                    window.location.reload();
+                }
+            });
         });
         function getUserlist(){
             table.clear()
@@ -92,13 +128,20 @@
                 });
                 return;
             }
+            var index = 0;
             data.data.forEach(function(obj){
+                var actionButtons = `
+                    <button class="edit-btn" data-id="${index}">编辑</button>
+                    <button class="delete-btn" data-id="${index}">删除</button>
+                `;
+                index++;
                 table.row.add([
                     obj.id,
                     obj.name,
                     obj.password,
                     obj.nickname,
-                    obj.permission
+                    obj.permission,
+                    actionButtons
                 ]).draw();  // 重新绘制表格，显示新增的行
             });
         }

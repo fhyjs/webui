@@ -8,7 +8,7 @@
 </head>
 <body>
     <h1>数据库设置</h1>
-    <h3>第一次配置请在数据库配置完成后在用户管理中创建一个管理员用户(2级或以上权限)</h3>
+    <h3>第一次配置请在数据库配置完成后在用户管理中创建一个管理员用户(10级或以上权限)</h3>
     <hr>
     <button onclick="$('#desc').html('url(jdbc:mysql://[host]/[database]),用户名,密码');$('#db-class').val('org.eu.hanana.reimu.webui.core.database.Mysql');$('#db-constructor').val('<init>(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V');setArgNumber(3)">预设:MySql</button>
     <button onclick="$('#desc').html('url(jdbc:sqlite:[文件名])');$('#db-class').val('org.eu.hanana.reimu.webui.core.database.Sqlite');$('#db-constructor').val('<init>(Ljava/lang/String;)V');setArgNumber(1)">预设:SqlLite</button>

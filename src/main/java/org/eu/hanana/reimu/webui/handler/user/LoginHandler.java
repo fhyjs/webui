@@ -73,6 +73,10 @@ public class LoginHandler extends AbstractPathHandler {
                             if (query.isEmpty()){
                                 throw new RuntimeException("用户名不存在");
                             }
+                            Set<String> strings = new HashSet<>(user.data.keySet());
+                            for (String string : strings) {
+                                user.data.remove(string);
+                            }
                             user.data.addProperty("username",username);
                             user.data.addProperty("nickname",query.get(0).getAsJsonObject().get("nickname").getAsString());
                             user.data.addProperty("permission",query.get(0).getAsJsonObject().get("permission").getAsInt());

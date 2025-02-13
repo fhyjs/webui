@@ -120,8 +120,8 @@ public class WebUi implements Closeable {
             handlers.add(new WsHandler());
             handlers.add(new DatabaseHandler());
             handlers.add(new UserHandler());
-            addPermissionRule("^/data/settings/.*",2);
-            addPermissionRule("^/static/cp/webui/pages/settings.html",2);
+            addPermissionRule("^/data/settings/.*",10);
+            addPermissionRule("^/static/cp/webui/pages/settings.*",10);
             authenticator.setChecker(this::hasPermission);
             setAccountManager(new AccountManager());
             addEventCallback(new WebuiEventCallback(this));
