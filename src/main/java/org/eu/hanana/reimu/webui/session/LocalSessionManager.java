@@ -5,6 +5,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.reflect.TypeToken;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -14,8 +16,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
-@Log4j2
 public class LocalSessionManager extends MemorySessionManager{
+    private static final Logger log = LogManager.getLogger(LocalSessionManager.class);
     protected final File file;
     @SneakyThrows
     public LocalSessionManager(){

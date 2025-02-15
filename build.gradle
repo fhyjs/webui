@@ -4,12 +4,15 @@ plugins {
 }
 
 group = 'org.eu.hanana.reimu.webui'
-version = '1.0.0'
+version = '1.0.4'
 
 repositories {
     mavenCentral()
 }
-
+task copyDependencies(type: Copy) {
+    from configurations.runtimeClasspath
+    into "$buildDir/libs/dependencies"
+}
 dependencies {
     implementation 'org.projectlombok:lombok:1.18.30' // 请使用最新版本
     annotationProcessor 'org.projectlombok:lombok:1.18.30'

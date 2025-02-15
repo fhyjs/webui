@@ -2,6 +2,8 @@ package org.eu.hanana.reimu.webui.handler.user;
 
 import com.google.gson.*;
 import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eu.hanana.reimu.webui.core.Util;
 import org.eu.hanana.reimu.webui.core.database.IDatabase;
 import org.eu.hanana.reimu.webui.core.database.Mysql;
@@ -19,8 +21,9 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
-@Log4j2
 public class LoginHandler extends AbstractPathHandler {
+    private static final Logger log = LogManager.getLogger(LoginHandler.class);
+
     @Override
     protected String getPath() {
         return "/data/user/login.json";

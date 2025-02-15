@@ -13,6 +13,6 @@ public class WebuiJsEntryHandler extends AbstractModelJsEntryHandler{
 
     @Override
     public Publisher<Void> handle(HttpServerRequest httpServerRequest, HttpServerResponse httpServerResponse) {
-        return Util.sendRedirect(httpServerResponse,"http://127.0.0.1:5160/static/cp/webui/assets/webui.js").send();
+        return Util.sendRedirect(httpServerResponse,httpServerRequest.uri()+"../../../../static/cp/webui/assets/webui.js").send();
     }
 }

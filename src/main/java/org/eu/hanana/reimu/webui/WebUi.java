@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.eu.hanana.reimu.webui.authentication.DefaultAuthenticator;
 import org.eu.hanana.reimu.webui.authentication.IAuthenticator;
 import org.eu.hanana.reimu.webui.authentication.account.AccountManager;
@@ -47,10 +49,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-@Log4j2
 @RequiredArgsConstructor
 public class WebUi implements Closeable {
     private static final Mono<Void> EMPTY_MONO_VOID = IRequestHandler.EMPTY_MONO_VOID;
+    private static final Logger log = LogManager.getLogger(WebUi.class);
     public HttpServer httpServer;
     public DisposableServer disposableServer;
     public final String host;

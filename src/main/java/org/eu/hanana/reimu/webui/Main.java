@@ -2,9 +2,11 @@ package org.eu.hanana.reimu.webui;
 
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-@Log4j2
 public class Main implements Runnable{
+    private static final Logger log = LogManager.getLogger(Main.class);
     public static Main main;
     public String[] args;
     public WebUi webUi;

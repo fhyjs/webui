@@ -4,6 +4,8 @@ import com.google.gson.JsonObject;
 import io.netty.handler.codec.http.cookie.Cookie;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.netty.http.server.HttpServerRequest;
@@ -25,10 +27,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-@Log4j2
 public class Util {
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     private static final SecureRandom RANDOM = new SecureRandom();
+    private static final Logger log = LogManager.getLogger(Util.class);
 
     public static String generateRandomString(int length) {
         StringBuilder sb = new StringBuilder(length);
@@ -112,7 +114,7 @@ public class Util {
         return httpServerResponse.status(307).addHeader("Location",path);
     }
     public static HttpServerResponse autoContentType(HttpServerResponse httpServerResponse){
-        return httpServerResponse.addHeader("content-type",getMimeType(httpServerResponse.uri()));
+        return httpServerResponse.addHeader("content-type",getMimeType(httpServerResponse.fullPath()));
     }
     public static String getDescriptor(Constructor<?> constructor) {
         StringBuilder descriptor = new StringBuilder("<init>(");
