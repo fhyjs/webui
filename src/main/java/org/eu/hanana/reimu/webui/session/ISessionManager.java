@@ -15,4 +15,6 @@ public interface ISessionManager extends Closeable {
     boolean checkSession(HttpServerRequest request, HttpServerResponse response);
     User getUser(HttpServerRequest httpServerRequest);
     void save();
+    void setExpire(long second);
+    ISessionStorage getStorage();
 }

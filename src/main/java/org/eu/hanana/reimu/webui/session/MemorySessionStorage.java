@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MemorySessionStorage implements ISessionStorage {
     protected final Map<UUID, User> users = new ConcurrentHashMap<>();
-
+    protected boolean dirty = false;
     @Override
     public User getUser(UUID uuid) {
         return users.get(uuid);
@@ -19,11 +19,13 @@ public class MemorySessionStorage implements ISessionStorage {
     @Override
     public void removeUser(UUID uuid) {
         users.remove(uuid);
+        dirty=true;
     }
 
     @Override
     public void addUser(User user) {
         users.put(user.uuid, user);
+        dirty=true;
     }
 
     @Override
@@ -33,6 +35,7 @@ public class MemorySessionStorage implements ISessionStorage {
 
     @Override
     public void save() {
+        dirty=false;
         for (User user : users.values()) {
             user.dirty = false;
         }
@@ -42,8 +45,11 @@ public class MemorySessionStorage implements ISessionStorage {
     public boolean changed() {
         var f = false;
         for (User user : users.values()) {
-            if (user.dirty) f=true;
+            if (user.dirty) {
+                f = true;
+                break;
+            }
         }
-        return f;
+        return dirty||f;
     }
 }

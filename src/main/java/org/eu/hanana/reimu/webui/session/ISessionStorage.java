@@ -10,5 +10,5 @@ public interface ISessionStorage {
     void addUser(User user);
     boolean hasUser(UUID uuid);
     void save();
-    public boolean changed();
+    boolean changed();
 }
