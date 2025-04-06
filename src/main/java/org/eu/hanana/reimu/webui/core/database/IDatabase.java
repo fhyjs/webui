@@ -18,4 +18,6 @@ public interface IDatabase extends Closeable {
     void createTableFromJson(TableData jsonConfig) throws SQLException;
     void createTableFromJson(JsonObject jsonConfig) throws SQLException;
     JsonArray query(String query,Object... args) throws SQLException;
+    void open() throws SQLException;
+    void forceClose();
 }

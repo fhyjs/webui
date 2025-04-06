@@ -240,6 +240,7 @@ public class WebUi implements Closeable {
                 }
             }));
         }
+
         return toSend;
     }
 

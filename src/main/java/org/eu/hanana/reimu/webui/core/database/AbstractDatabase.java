@@ -15,6 +15,12 @@ import java.util.List;
 import static org.eu.hanana.reimu.webui.core.Util.parseColumn;
 
 public abstract class AbstractDatabase implements IDatabase {
+    protected DbConnectionProtector protector;
+    public void startProtector(){
+        protector = new DbConnectionProtector(this);
+        protector.setName("Database connection protector["+getConnection()+"]");
+        protector.start();
+    }
     @Override
     public JsonArray query(String query) throws SQLException {
         try(var stm = getStatement()) {
@@ -86,10 +92,14 @@ public abstract class AbstractDatabase implements IDatabase {
     @SneakyThrows
     @Override
     public void close() throws IOException {
-        getStatement().close();
+        protector.interrupt();
+        //getStatement().close();
         getConnection().close();
     }
-
+    @SneakyThrows
+    public void forceClose(){
+        getConnection().close();
+    }
     @Override
     public boolean hasTable(String name) {
         try {

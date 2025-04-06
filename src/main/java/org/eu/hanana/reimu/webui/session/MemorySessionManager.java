@@ -65,6 +65,9 @@ public class MemorySessionManager implements ISessionManager {
             user.markDirty();
         }else{
             user=storage.getUser(UUID.fromString(Util.getCookieValue(request, sessionFieldName).value()));
+            if (!user.data.has("expire_time")){
+                user.data.addProperty("expire_time", Instant.now().plusSeconds(expire).getEpochSecond());
+            }
             if (user.data.get("expire_time").getAsBigInteger().longValue()<=Instant.now().getEpochSecond()){
                 getStorage().removeUser(user.uuid);
             }

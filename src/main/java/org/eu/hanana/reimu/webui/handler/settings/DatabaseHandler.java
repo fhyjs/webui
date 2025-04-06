@@ -75,6 +75,20 @@ public class DatabaseHandler extends AbstractPathHandler {
                         result.add("status",new JsonPrimitive("error"));
                     }
 
+                }else if(action.equals("f_close")) {
+                    if (webUi.getDatabaseConfig()!=null){
+                        result.add("status",new JsonPrimitive("success"));
+                        try{
+                            webUi.getDatabaseConfig().getDatabase().forceClose();
+                        } catch (Exception e) {
+                            result.add("status",new JsonPrimitive("error"));
+                            e.printStackTrace();
+                        }
+
+                    }else{
+                        result.add("status",new JsonPrimitive("error"));
+                    }
+
                 }else{
                     result.add("status",new JsonPrimitive("error"));
                     result.add("msg",new JsonPrimitive("未指定操作"));

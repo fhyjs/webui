@@ -24,6 +24,8 @@
     <div id="argv"></div><br>
     <button onclick="setArgNumber(argNum+1)">+</button><button onclick="setArgNumber(argNum-1)">-</button><hr/>
     <button onclick="save()">验证并保存</button>
+    <hr>
+    <button onclick="f_close()">故障测试</button>
     <script>
         argNum=0;
         function setArgNumber(n){
@@ -44,6 +46,23 @@
                 sqlManagerClass:$("#db-class").val(),
                 constructorSignature:$("#db-constructor").val(),
                 args:args
+            };
+
+            // 将对象转换为 JSON 字符串
+            var jsonData = JSON.stringify(data, null, 2); // 格式化 JSON 字符串
+            var data = $.parseJSON(synchronousPostRequest("../../../../../data/settings/database.json",jsonData));
+            Swal.fire({
+                title: data.status,
+                text: data.msg,
+                icon: data.status
+            }).then((result) => {
+
+            });
+        }
+        function f_close(){
+            // 创建一个 JavaScript 对象
+            var data = {
+                action:"f_close"
             };
 
             // 将对象转换为 JSON 字符串
