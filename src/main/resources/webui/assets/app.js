@@ -138,7 +138,6 @@ window.addEventListener('resize', debounce(function() {
 }, 200));
 function setPage(url){
     $("#content iframe").attr("src",url);
-    $("#path-loc").html(url);
     const event = new CustomEvent("setPage", {
         detail: { url:url} // 可选，传递数据
     });
@@ -198,6 +197,7 @@ class appClass{
     models=[];
     userData=null;
     messages=[];
+    httpManager = new HttpChannelManager();
     getUserData(){
         this.userData=$.parseJSON(synchronousPostRequest("../../../data/user_data.json",""));
         if (typeof this.userData.data.username === "undefined"){
@@ -253,6 +253,31 @@ class appClass{
             console.error('WebSocket错误:', error);
         };
         tip.close();
+        $('#content iframe').on('urlChanged', function (e, newUrl) {
+            console.log('URL变化事件触发:', newUrl);
+            $("#path-loc").html(newUrl);
+        });
+        let lastUrl = '';
+
+        setInterval(function () {
+            const iframe = $('#content-iframe')[0];
+            if (!iframe) return;
+
+            try {
+                const currentUrl = iframe.contentWindow.location.href;
+
+                if (currentUrl !== lastUrl) {
+                    lastUrl = currentUrl;
+                    console.log('[iframe] URL changed:', currentUrl);
+
+                    // 使用 jQuery 触发自定义事件 urlChanged
+                    $(iframe).trigger('urlChanged', currentUrl);
+                }
+            } catch (e) {
+                // 跨域时会抛异常
+                console.warn('[iframe] 无法访问 iframe 内容，可能是跨域');
+            }
+        }, 500);
     }
     sendMessage(level,content){
         var msg = new AppMessage(level,content);
@@ -268,4 +293,56 @@ class AppMessage{
         this.level=level;
         this.content=content;
     }
+}
+class HttpChannelManager {
+    constructor(baseURL = '') {
+        this.baseURL = baseURL;
+        this.callbacks = new Map(); // channel => callback
+    }
+
+    // 注册通道回调（回调接收响应数据）
+    on(channel, callback) {
+        this.callbacks.set(channel, callback);
+    }
+
+    // 注销通道回调
+    off(channel) {
+        this.callbacks.delete(channel);
+    }
+
+    // 发送 HTTP POST 请求（json），带通道名
+    async send(channel, data) {
+        const url = this.baseURL + channel; // 或者你自己定义映射规则
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+            const json = await res.json();
+
+            // 触发注册回调
+            const cb = this.callbacks.get(channel);
+            if (cb) cb(json);
+
+            return json;
+        } catch (e) {
+            console.error(`[HttpChannelManager] ${channel} 请求失败:`, e);
+            throw e;
+        }
+    }
+}
+
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static.cp?path=webui/assets/sw.js', {
+    }).then(function (registration) {
+        // 注册成功
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    }).catch(function (err) {
+        // 注册失败 :(
+        console.log('ServiceWorker registration failed: ', err);
+    });
 }

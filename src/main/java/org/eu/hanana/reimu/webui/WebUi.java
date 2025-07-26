@@ -1,10 +1,9 @@
 package org.eu.hanana.reimu.webui;
 
+import com.google.gson.JsonObject;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.SneakyThrows;
-import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eu.hanana.reimu.webui.authentication.DefaultAuthenticator;
@@ -16,12 +15,15 @@ import org.eu.hanana.reimu.webui.core.Util;
 import org.eu.hanana.reimu.webui.core.WebuiEventCallback;
 import org.eu.hanana.reimu.webui.core.config.DatabaseConfig;
 import org.eu.hanana.reimu.webui.handler.*;
+import org.eu.hanana.reimu.webui.handler.debug.ErrorHandler;
+import org.eu.hanana.reimu.webui.handler.session.GenNewSessionHandler;
+import org.eu.hanana.reimu.webui.handler.session.ShowSessionHandler;
+import org.eu.hanana.reimu.webui.handler.debug.TimeoutHandler;
 import org.eu.hanana.reimu.webui.handler.permission.GetPermissionLvHandler;
 import org.eu.hanana.reimu.webui.handler.settings.DatabaseHandler;
 import org.eu.hanana.reimu.webui.handler.settings.UserHandler;
 import org.eu.hanana.reimu.webui.handler.user.LoginHandler;
 import org.eu.hanana.reimu.webui.session.LocalSessionManager;
-import org.eu.hanana.reimu.webui.session.MemorySessionManager;
 import org.eu.hanana.reimu.webui.session.ISessionManager;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
@@ -34,9 +36,10 @@ import reactor.netty.http.server.HttpServerResponse;
 import reactor.util.function.Tuple2;
 import reactor.util.function.Tuples;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
@@ -66,12 +69,16 @@ public class WebUi implements Closeable {
     protected ISessionManager sessionManage = new LocalSessionManager();
     public IAuthenticator authenticator = new DefaultAuthenticator(sessionManage);
     protected final Map<String,Integer> pathPermission = new HashMap<>();
+    protected final List<String> sessionFreeRules = new ArrayList<>();
     protected final List<IEventCallback> eventCallbacks = new ArrayList<>();
     public void open(boolean sync){
         open(sync,firstOpen);
     }
     public void addPermissionRule(String regex,int permissionLv){
         pathPermission.put(regex,permissionLv);
+    }
+    public void addSessionFreeRule(String regex){
+        sessionFreeRules.add(regex);
     }
     public final List<IRequestHandler> handlers = new ArrayList<>(){
         @Override
@@ -112,6 +119,7 @@ public class WebUi implements Closeable {
     @SneakyThrows
     public void open(boolean sync, boolean first){
         if (first){
+            System.out.println("webui starting...");
             handlers.add(new StaticHandler());
             handlers.add(new UserDbgHandler());
             handlers.add(new HomeRedirect());
@@ -122,8 +130,19 @@ public class WebUi implements Closeable {
             handlers.add(new WsHandler());
             handlers.add(new DatabaseHandler());
             handlers.add(new UserHandler());
+            handlers.add(new SWJsEntryHandler());
+            // Debugs
+            handlers.add(new ErrorHandler());
+            handlers.add(new TimeoutHandler());
+            handlers.add(new ShowSessionHandler());
+            // Session
+            handlers.add(new GenNewSessionHandler());
+
             addPermissionRule("^/data/settings/.*",10);
             addPermissionRule("^/static/cp/webui/pages/settings.*",10);
+            addSessionFreeRule("^/debug/session/.*");
+            addSessionFreeRule("^/.well-known/.*");
+            addSessionFreeRule("^/static.cp.*");
             authenticator.setChecker(this::hasPermission);
             setAccountManager(new AccountManager());
             addEventCallback(new WebuiEventCallback(this));
@@ -138,7 +157,7 @@ public class WebUi implements Closeable {
         AtomicBoolean finish = new AtomicBoolean(false);
         AtomicReference<Throwable> throwable = new AtomicReference<>(null);
 
-        (httpServer = HttpServer.create().host(host).port(port).protocol(HttpProtocol.HTTP11,HttpProtocol.H2C)
+        (httpServer = HttpServer.create().host(host).port(port).protocol(HttpProtocol.HTTP11,HttpProtocol.H2C).doOnConnection(connection -> dispatchEvent("onConnection",connection))
                 .handle(this::handle)).bind().doOnSuccess(disposableServer1 -> {
             log.info("Success!");
             this.disposableServer=disposableServer1;
@@ -153,6 +172,7 @@ public class WebUi implements Closeable {
             }
         }
         if (throwable.get()!=null) throw new RuntimeException(throwable.get());
+        System.out.printf("WebUi(%s) started on %s:%d%n", this,host,port);
     }
     @SneakyThrows
     public void dispatchEvent(String name, Object... args){
@@ -205,7 +225,7 @@ public class WebUi implements Closeable {
     }
     private Publisher<Void> handle(HttpServerRequest request, HttpServerResponse httpServerResponse) {
         var stop = false;
-        if (sessionManage!=null){
+        if (sessionManage!=null&&sessionManage.requireSession(request,sessionFreeRules)){
             stop = sessionManage.checkSession(request,httpServerResponse)||stop;
             if (stop){
                 sessionManage.save();
@@ -277,6 +297,30 @@ public class WebUi implements Closeable {
             }
         }
         if (out.get()==null) out.set(EMPTY_MONO_VOID);
+        //有匹配是处理错误
+        if (out.get() != EMPTY_MONO_VOID) {
+            Publisher<Void> original = out.get();
+            Mono<Void> wrapped = Mono.from(original)
+                    .onErrorResume(throwable -> {
+                        // 打印异常日志
+                        throwable.printStackTrace();
+                        // 发送错误信息给客户端
+                        return httpServerResponse.status(500).sendString(Mono.create(stringMonoSink -> {
+                            var jo = new JsonObject();
+                            jo.addProperty("status","error");
+                            jo.addProperty("server","hanana webui core");
+                            jo.addProperty("message", throwable.toString());
+                            var os = new ByteArrayOutputStream();
+                            var ps = new PrintStream(os);
+                            throwable.printStackTrace(ps);
+                            jo.addProperty("detail", os.toString());
+                            stringMonoSink.success(jo.toString());
+                        })).then();
+                    });
+
+            // 更新返回值
+            out.set(wrapped);
+        }
         return Tuples.of(out.get(), retCode);
     }
     @Override

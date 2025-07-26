@@ -21,9 +21,15 @@ public class StaticHandler implements IRequestHandler{
         var code = 403;
         if (!path.startsWith("/static"))
             return -1;
-        if (path.startsWith("/static/cp/")){
+        if (path.startsWith("/static/cp/")||path.startsWith("/static.cp")){
             out.set(EMPTY_MONO_VOID);
-            InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream(path.substring(11));
+            if (path.startsWith("/static.cp")) {
+                path = httpServerRequest.uri().split("\\?path=")[1];
+            }else {
+                path = path.substring(11);
+            }
+            //httpServerRequest.uri().
+            InputStream resourceAsStream = this.getClass().getClassLoader().getResourceAsStream(path);
             if (resourceAsStream!=null){
                 out.set(httpServerResponse.addHeader("Content-Type", Util.getMimeType(path)).sendByteArray(Mono.create(monoSink -> {
                     try {

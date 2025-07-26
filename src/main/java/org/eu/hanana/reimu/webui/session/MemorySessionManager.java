@@ -10,11 +10,16 @@ import reactor.netty.http.server.HttpServerRequest;
 import reactor.netty.http.server.HttpServerResponse;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MemorySessionManager implements ISessionManager {
     private static final Logger log = LogManager.getLogger(MemorySessionManager.class);
@@ -43,6 +48,29 @@ public class MemorySessionManager implements ISessionManager {
     }
 
     @Override
+    public User newUser() {
+        var user=new User();
+        storage.addUser(user);
+        log.info("new user:{}",user.uuid);
+        user.data.addProperty("expire_time", Instant.now().plusSeconds(expire).getEpochSecond());
+        user.markDirty();
+        return user;
+    }
+
+    @Override
+    public boolean requireSession(HttpServerRequest request, List<String> sessionFreeRules) {
+        var fullPath = Paths.get(request.fullPath()).normalize().toString().replace("\\","/");
+        for (String reg : sessionFreeRules) {
+            Pattern pattern = Pattern.compile(reg);
+            Matcher matcher = pattern.matcher(fullPath);
+            if (matcher.matches()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
     public boolean checkSession(HttpServerRequest request, HttpServerResponse response) {
         var hasUser = true;
         if (request.cookies().containsKey(sessionFieldName)){
@@ -53,7 +81,11 @@ public class MemorySessionManager implements ISessionManager {
         }else{
             hasUser=false;
         }
-        User user;
+        User user=null;
+        if (!hasUser&&Util.parseQueryParams(request.uri()).get("session")!=null){
+            hasUser=true;
+            user=storage.getUser(UUID.fromString(Util.parseQueryParams(request.uri()).get("session").getFirst()));
+        }
         if (!hasUser){
             user=new User();
             DefaultCookie defaultCookie = new DefaultCookie(sessionFieldName, user.uuid.toString());
@@ -64,7 +96,9 @@ public class MemorySessionManager implements ISessionManager {
             user.data.addProperty("expire_time", Instant.now().plusSeconds(expire).getEpochSecond());
             user.markDirty();
         }else{
-            user=storage.getUser(UUID.fromString(Util.getCookieValue(request, sessionFieldName).value()));
+            if (user==null) {
+                user = storage.getUser(UUID.fromString(Util.getCookieValue(request, sessionFieldName).value()));
+            }
             if (!user.data.has("expire_time")){
                 user.data.addProperty("expire_time", Instant.now().plusSeconds(expire).getEpochSecond());
             }
@@ -75,8 +109,16 @@ public class MemorySessionManager implements ISessionManager {
         }
         return !hasUser;
     }
+
     public User getUser(HttpServerRequest httpServerRequest){
-        return storage.getUser(UUID.fromString(Util.getCookieValue(httpServerRequest, sessionFieldName).value()));
+        var v = Util.getCookieValue(httpServerRequest, sessionFieldName);
+        if (v==null) {
+            if (Util.parseQueryParams(httpServerRequest.uri()).get("session")!=null) {
+                v = new DefaultCookie("session", Util.parseQueryParams(httpServerRequest.uri()).get("session").getFirst());
+            }
+        }
+        if (v==null) return null;
+        return storage.getUser(UUID.fromString(v.value()));
     }
 
     @Override

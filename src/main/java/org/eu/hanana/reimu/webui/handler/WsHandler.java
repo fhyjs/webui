@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class WsHandler extends AbstractPathHandler{
+public class WsHandler extends AbstractEasyPathHandler{
     public static final Map<HttpServerRequest,Tuple2<WebsocketInbound, WebsocketOutbound>> wsConnections = new HashMap<>();
     @Override
     protected String getPath() {
@@ -26,7 +26,7 @@ public class WsHandler extends AbstractPathHandler{
     }
 
     @Override
-    public Publisher<Void> handle(HttpServerRequest httpServerRequest, HttpServerResponse httpServerResponse) {
+    public Publisher<Void> process(HttpServerRequest httpServerRequest, HttpServerResponse httpServerResponse) {
         return httpServerResponse.sendWebsocket((websocketInbound, websocketOutbound) -> {
             return Mono.<Void>create(voidMonoSink -> {
                 var gson = new Gson().newBuilder().excludeFieldsWithoutExposeAnnotation().create();

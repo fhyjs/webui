@@ -2,6 +2,13 @@ package org.eu.hanana.reimu.webui.core;
 
 import com.google.gson.Gson;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.*;
+import io.netty.handler.codec.MessageToMessageCodec;
+import io.netty.handler.codec.compression.CompressionOptions;
+import io.netty.handler.codec.compression.StandardCompressionOptions;
+import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.sctp.SctpOutboundByteStreamHandler;
+import io.netty.util.AttributeKey;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.eu.hanana.reimu.webui.WebUi;
@@ -11,8 +18,11 @@ import org.eu.hanana.reimu.webui.core.database.control.TableData;
 import org.eu.hanana.reimu.webui.core.ws.SendMessageData;
 import org.eu.hanana.reimu.webui.core.ws.WsData;
 import reactor.core.publisher.Mono;
+import reactor.netty.Connection;
 import reactor.netty.http.websocket.WebsocketInbound;
 import reactor.netty.http.websocket.WebsocketOutbound;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 public class WebuiEventCallback extends EventCallback{
@@ -47,5 +57,12 @@ public class WebuiEventCallback extends EventCallback{
                     new ColumnData("permission","int").setNotNull(true)
             ));
         }
+    }
+
+    @Override
+    public void onConnection(Connection connection) {
+        super.onConnection(connection);
+        connection.addHandlerFirst(new HttpContentCompressor(0, StandardCompressionOptions.gzip(),StandardCompressionOptions.deflate()));
+        //connection.addHandlerLast(new ServiceWorkerHeaderHandler());
     }
 }

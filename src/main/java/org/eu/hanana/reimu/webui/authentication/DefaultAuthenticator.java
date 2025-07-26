@@ -21,6 +21,7 @@ public class DefaultAuthenticator implements IAuthenticator{
     @Override
     public int getUserLevel(HttpServerRequest request) {
         User user = sessionManager.getUser(request);
+        if (user==null) return 0;
         if (!user.data.has(permissionFieldId)) {
             user.data.add(permissionFieldId,new JsonPrimitive(0));
             user.markDirty();

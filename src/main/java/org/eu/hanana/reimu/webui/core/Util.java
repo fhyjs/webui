@@ -18,13 +18,14 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.net.URI;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.SecureRandom;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class Util {
@@ -85,6 +86,26 @@ public class Util {
 
         g.dispose();
         return image;
+    }
+    public static Map<String, List<String>> parseQueryParams(String uri) {
+        Map<String, List<String>> queryPairs = new LinkedHashMap<>();
+        try {
+            URI u = new URI(uri);
+            String query = u.getRawQuery();
+            if (query == null) {
+                return queryPairs;
+            }
+            String[] pairs = query.split("&");
+            for (String pair : pairs) {
+                int idx = pair.indexOf("=");
+                String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8) : pair;
+                String value = idx > 0 && pair.length() > idx + 1 ? URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8) : null;
+                queryPairs.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return queryPairs;
     }
     public static Cookie getCookieValue(HttpServerRequest request, String cookieName) {
         // 获取所有的 cookies

@@ -4,6 +4,8 @@ import reactor.netty.http.server.HttpServerRequest;
 import reactor.netty.http.server.HttpServerResponse;
 
 import java.io.Closeable;
+import java.util.List;
+import java.util.Map;
 
 public interface ISessionManager extends Closeable {
 
@@ -17,4 +19,6 @@ public interface ISessionManager extends Closeable {
     void save();
     void setExpire(long second);
     ISessionStorage getStorage();
+    User newUser();
+    boolean requireSession(HttpServerRequest request, List<String> sessionFreeRules);
 }

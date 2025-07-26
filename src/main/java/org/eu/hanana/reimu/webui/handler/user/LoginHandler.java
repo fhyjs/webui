@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.eu.hanana.reimu.webui.core.Util;
 import org.eu.hanana.reimu.webui.core.database.IDatabase;
 import org.eu.hanana.reimu.webui.core.database.Mysql;
+import org.eu.hanana.reimu.webui.handler.AbstractEasyPathHandler;
 import org.eu.hanana.reimu.webui.handler.AbstractPathHandler;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
@@ -21,7 +22,7 @@ import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Set;
 
-public class LoginHandler extends AbstractPathHandler {
+public class LoginHandler extends AbstractEasyPathHandler {
     private static final Logger log = LogManager.getLogger(LoginHandler.class);
 
     @Override
@@ -30,7 +31,7 @@ public class LoginHandler extends AbstractPathHandler {
     }
 
     @Override
-    public Publisher<Void> handle(HttpServerRequest httpServerRequest, HttpServerResponse httpServerResponse) {
+    public Publisher<Void> process(HttpServerRequest httpServerRequest, HttpServerResponse httpServerResponse) {
         return Util.autoContentType(httpServerResponse).status(200).sendString(Mono.create(stringMonoSink -> {
             var user = webUi.getSessionManage().getUser(httpServerRequest);
             Mono<String> stringMono = httpServerRequest.receive()
